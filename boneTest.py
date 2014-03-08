@@ -48,6 +48,16 @@ def dumpVertData():
     f.close() 
     '''
     
+def dumpAnimation():
+    fi = open('ani.dat', 'w')
+    fi.write("%d\n"%(2))
+    for f in [1, 29]:
+        fi.write("%d\n" % (f))
+        bpy.context.scene.frame_set(f)
+        dumpPoseBoneData(fi)
+    fi.close()    
+            
+    
 def dumpFaceData():
     fi = open('face.dat', 'w')
     mesh = bpy.data.meshes['Cube']
@@ -61,10 +71,25 @@ def dumpFaceData():
         fi.write(s)
     fi.close()
       
-    
-def dumpBoneData():
+def dumpPoseBoneData(f):
+    bo = bpy.context.object.pose.bones
+    f.write('%d\n' % (len(bo)))
+    for k in bo:
+        q = k.matrix.to_quaternion()
+        f.write('%f %f %f %f\n' % (q.x, q.y, q.z, q.w))
+        f.write('%f\n' % (k.length))
+        f.write('%f %f %f\n'%( k.head.x, k.head.y, k.head.z))
+        if k.parent == None:
+            f.write('-1\n')
+        else:
+            f.write('%d\n' % (bv.index(k.parent)))
+
+def dumpBoneData(fi):
     bv = bpy.data.armatures.get('Armature').bones.values()
-    f = open('bone.dat', 'w')
+    oldFi = fi
+    if fi == None:
+        fi = open('bone.dat', 'w')
+    f = fi
     f.write('%d\n'%(len(bv)))
     for k in bv:
         q = k.matrix.to_quaternion()
@@ -75,11 +100,12 @@ def dumpBoneData():
             f.write('-1\n')
         else:
             f.write('%d\n' % (bv.index(k.parent)))
-    f.close()        
+    if oldFi == None:
+        f.close()        
 
 
 if __name__ == '__main__':
     dumpVertData()
     dumpFaceData()
-    dumpBoneData()    
-        
+    dumpBoneData(None)    
+    dumpAnimation()
