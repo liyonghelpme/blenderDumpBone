@@ -4,8 +4,9 @@ import mathutils
 
 def dumpVertData():
     obj = bpy.data.objects['Cube']
+    ob = obj
     vert = obj.data.vertices
-    arm = bpy.data.objects['Armature']
+    #arm = bpy.data.objects['Armature']
     
     vert_groups = obj.vertex_groups.values()
     group_tot = len(obj.vertex_groups)
@@ -23,9 +24,26 @@ def dumpVertData():
     
     
     f = open('vert.dat', 'w')
-    f.write("%d\n" % len(vert))
-    for v in vert:
-        f.write('%f %f %f\n'% (v.co.x, v.co.y, v.co.z))
+    #f.write("%d\n" % len(vert))
+    #12 *3 = 36 vertice
+    f.write('%d\n' % (len(ob.data.polygons)*3))
+
+    #for v in vert:
+    #    f.write('%f %f %f\n'% (v.co.x, v.co.y, v.co.z))
+
+
+    for face in ob.data.polygons:
+        for v, loop in zip(face.vertices, face.loop_indices):
+            f.write('%f %f %f\n' % (vert[v].co.x, vert[v].co.y, vert[v].co.z))
+            '''
+            if hasUv:
+                uv = ob.data.uv_layers.active.data[loop].uv
+                fi.write('%.2f, %.2f\n' % (uv[0], uv[1]))
+            else:
+                fi.write('%.2f, %.2f\n' % (0, 0))
+            '''
+
+    #weight vertex
     f.write("%d\n"% group_tot)
     for i, w in enumerate(weight_ls):
         for k in w:
@@ -47,7 +65,9 @@ def dumpVertData():
     f.write(s)
     f.close() 
     '''
+    print("finish vertices")
     
+#no animation data
 def dumpAnimation():
     fi = open('ani.dat', 'w')
     fi.write("%d\n"%(2))
@@ -60,16 +80,24 @@ def dumpAnimation():
     
 def dumpFaceData():
     fi = open('face.dat', 'w')
-    mesh = bpy.data.meshes['Cube']
-    fi.write('%d\n' % (len(mesh.faces)))
-    for f in mesh.faces:
+    ob = bpy.data.objects['Cube']
+    faces = ob.data.polygons
+    #mesh = bpy.data.meshes['Cube']
+    #fi.write('%d\n' % (len(mesh.faces)))
+    fi.write('%d\n' % (len(faces)))
+    #for f in mesh.faces:
+    count = 0
+    for f in faces:
         s = ''
-        s += '%d\n' % (len(f.vertices))
+        #s += '%d\n' % (len(f.vertices))
         for i in f.vertices:
-            s += '%d ' % (i) 
+            #s += '%d ' % (i) 
+            s += '%d ' % (count) 
+            count += 1
         s += '\n'
         fi.write(s)
     fi.close()
+    print("finish Face")
       
 def dumpPoseBoneData(f):
     bo = bpy.context.object.pose.bones
@@ -103,9 +131,30 @@ def dumpBoneData(fi):
     if oldFi == None:
         f.close()        
 
+def dumpTex():
+    ob = bpy.data.objects['Cube']
+    hasUv = ob.data.uv_layers.active
+    count = len(ob.data.polygons)
+    fi = open('tex.dat', 'w')
+    fi.write('%d\n' % count)
+
+    for face in ob.data.polygons:
+        for vert, loop in zip(face.vertices, face.loop_indices):
+            if hasUv:
+                uv = ob.data.uv_layers.active.data[loop].uv
+                fi.write('%.2f %.2f\n' % (uv[0], uv[1]))
+            else:
+                fi.write('%.2f %.2f\n' % (0, 0))
+                #print(0, 0)
+            
+            #for item in (ob.data.uv_layers.active.data[loop].uv if  is not None else (0.0, 0.0)):
+                #print(item)
+    fi.close()
+    print("finish Tex")
 
 if __name__ == '__main__':
     dumpVertData()
     dumpFaceData()
-    dumpBoneData(None)    
-    dumpAnimation()
+    #dumpBoneData(None)    
+    #dumpAnimation()
+    dumpTex()
